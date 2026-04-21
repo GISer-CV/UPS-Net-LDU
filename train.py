@@ -8,9 +8,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from functools import partial
 
-# ------------------------------------------------------------------#
-#   【修改点1】导入正确的类名 AblationSMPUnet
-# ------------------------------------------------------------------#
+
 from nets.custom_smp_unet import AblationSMPUnet
 
 from nets.unet_training import get_lr_scheduler, set_optimizer_lr
@@ -20,9 +18,7 @@ from utils.utils import seed_everything, show_config, worker_init_fn
 from utils.utils_fit import fit_one_epoch
 
 if __name__ == "__main__":
-    # ------------------------------------------------------------------#
-    #   基础配置
-    # ------------------------------------------------------------------#
+
     Cuda            = True
     seed            = 11
     distributed     = False
@@ -34,25 +30,23 @@ if __name__ == "__main__":
     model_path      = ""
     input_shape     = [512, 512]
     
-    # ------------------------------------------------------------------#
-    #   【消融实验开关】在这里控制你的实验变量
-    # ------------------------------------------------------------------#
+
     # 实验1 (Baseline): False, False
     # 实验2 (Only DEES): True, False
     # 实验3 (Only GSAG): False, True
     # 实验4 (Full Method): True, True
-    # ------------------------------------------------------------------#
-    USE_DEES        = True   # 是否使用瓶颈层增强
-    USE_GSAG        = True   # 是否使用跳跃连接注意力
-    # ------------------------------------------------------------------#
 
-    # 训练参数
+    USE_DEES        = True   
+    USE_GSAG        = True   
+
+
+
     Init_Epoch          = 0
     Freeze_Epoch        = 50
     Freeze_batch_size   = 16  
     UnFreeze_Epoch      = 100
     Unfreeze_batch_size = 16 
-    Freeze_Train        = False # 建议关闭冻结训练
+    Freeze_Train        = False 
 
     Init_lr             = 1e-4
     Min_lr              = Init_lr * 0.01
@@ -74,9 +68,7 @@ if __name__ == "__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     local_rank = 0
 
-    # ------------------------------------------------------------------#
-    #   【修改点2】实例化 AblationSMPUnet 并传入开关
-    # ------------------------------------------------------------------#
+
     print(f"Loading AblationSMPUnet with backbone: {backbone}...")
     print(f"Experiment Settings -> DEES: {USE_DEES}, GSAG: {USE_GSAG}")
     
@@ -84,15 +76,15 @@ if __name__ == "__main__":
         encoder_name=backbone,
         encoder_weights="imagenet",
         num_classes=num_classes,
-        use_dees=USE_DEES,  # 传入开关
-        use_gsag=USE_GSAG   # 传入开关
+        use_dees=USE_DEES,  
+        use_gsag=USE_GSAG   
     )
     
     model = model.train()
 
-    # 记录 Loss (为了区分实验，可以在 log_dir 加上后缀)
+
     time_str        = datetime.datetime.strftime(datetime.datetime.now(),'%Y_%m_%d_%H_%M_%S')
-    # 自动命名 log 文件夹，方便你区分是哪组实验
+
     exp_name        = f"_D{int(USE_DEES)}_G{int(USE_GSAG)}" 
     log_dir         = os.path.join(save_dir, "loss_" + str(time_str) + exp_name)
     
@@ -110,7 +102,7 @@ if __name__ == "__main__":
         cudnn.benchmark = True
         model_train = model_train.cuda()
 
-    # 读取数据集
+
     with open(os.path.join(VOCdevkit_path, "VOC2007/ImageSets/Segmentation/train.txt"),"r") as f:
         train_lines = f.readlines()
     with open(os.path.join(VOCdevkit_path, "VOC2007/ImageSets/Segmentation/val.txt"),"r") as f:
@@ -126,7 +118,7 @@ if __name__ == "__main__":
             save_period = save_period, save_dir = save_dir, num_workers = num_workers, num_train = num_train, num_val = num_val
         )
 
-    # 训练循环
+
     if True:
         UnFreeze_flag = False
         batch_size = Unfreeze_batch_size 
