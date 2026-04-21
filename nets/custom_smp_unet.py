@@ -3,9 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import segmentation_models_pytorch as smp
 
-# =====================================================================
-# 1. 基础组件 (FReLU, SELayer)
-# =====================================================================
+
+#   (FReLU, SELayer)
+
 class FReLU(nn.Module):
     def __init__(self, c1, k=3):
         super().__init__()
@@ -33,9 +33,9 @@ class SELayer(nn.Module):
         y = self.fc(y).view(b, c, 1, 1)
         return x * y.expand_as(x)
 
-# =====================================================================
-# 2. 创新模块 (DEESBlock & GSAGBlock)
-# =====================================================================
+
+#  (DEESBlock & GSAGBlock)
+
 class DEESBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(DEESBlock, self).__init__()
@@ -114,9 +114,8 @@ class GSAGBlock(nn.Module):
         attention_map = self.psi(fusion_enhanced)
         return x_shallow * attention_map
 
-# =====================================================================
-# 3. 标准组件 (unetUp)
-# =====================================================================
+
+
 class unetUp(nn.Module):
     def __init__(self, in_size, out_size):
         super(unetUp, self).__init__()
@@ -133,9 +132,9 @@ class unetUp(nn.Module):
         outputs = self.relu(outputs)
         return outputs
 
-# =====================================================================
-# 4. 主模型类 (AblationSMPUnet) - 【已修复层名称匹配】
-# =====================================================================
+
+
+
 class AblationSMPUnet(nn.Module):
     def __init__(self, encoder_name='resnet50', encoder_weights='imagenet', num_classes=2, 
                  use_dees=True, use_gsag=True):
@@ -144,7 +143,7 @@ class AblationSMPUnet(nn.Module):
         self.use_dees = use_dees
         self.use_gsag = use_gsag
         
-        # 1. 编码器
+        # 1. 
         self.encoder = smp.encoders.get_encoder(
             encoder_name, 
             in_channels=3, 
@@ -155,14 +154,14 @@ class AblationSMPUnet(nn.Module):
         
         out_filters = [64, 128, 256, 512]
         
-        # -------------------------------------------------------------
-        # 2. 瓶颈层设置 (修正名称以匹配权重文件)
-        # -------------------------------------------------------------
+
+
+
         if self.use_dees:
-            # 【修复点】改名为 bottleneck_dees 匹配 saved weights
+         
             self.bottleneck_dees = DEESBlock(encoder_channels[-1], out_filters[3])
         else:
-            # 如果不使用 DEES，使用通用名称 bottleneck
+            
             self.bottleneck = nn.Sequential(
                 nn.Conv2d(encoder_channels[-1], out_filters[3], kernel_size=3, padding=1, bias=False),
                 nn.BatchNorm2d(out_filters[3]),
@@ -171,9 +170,7 @@ class AblationSMPUnet(nn.Module):
             
         center_c = out_filters[3]
 
-        # -------------------------------------------------------------
-        # 3. 解码器设置
-        # -------------------------------------------------------------
+       
         if self.use_gsag:
             self.gsag4 = GSAGBlock(encoder_channels[-2], center_c, out_filters[3])
             self.gsag3 = GSAGBlock(encoder_channels[-3], out_filters[3], out_filters[2])
@@ -190,31 +187,29 @@ class AblationSMPUnet(nn.Module):
         features = self.encoder(x)
         feat1, feat2, feat3, feat4, feat5 = features[1], features[2], features[3], features[4], features[5]
 
-        # -------------------------------------------------------------
-        # 瓶颈层前向传播 (分支处理)
-        # -------------------------------------------------------------
+      
         if self.use_dees:
-            # 使用 bottleneck_dees
+            #  bottleneck_dees
             feat5_processed = self.bottleneck_dees(feat5)
         else:
-            # 使用 bottleneck
+            #  bottleneck
             feat5_processed = self.bottleneck(feat5)
 
-        # 解码路径 Layer 4
+        #  Layer 4
         if self.use_gsag:
             feat4_in = self.gsag4(feat4, feat5_processed)
         else:
             feat4_in = feat4
         up4 = self.up_concat4(feat4_in, feat5_processed)
 
-        # 解码路径 Layer 3
+        #  Layer 3
         if self.use_gsag:
             feat3_in = self.gsag3(feat3, up4)
         else:
             feat3_in = feat3
         up3 = self.up_concat3(feat3_in, up4)
 
-        # 解码路径 Layer 2
+        #  Layer 2
         if self.use_gsag:
             feat2_in = self.gsag2(feat2, up3)
         else:
