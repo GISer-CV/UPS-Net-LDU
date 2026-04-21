@@ -11,7 +11,7 @@ This project is built upon and improved from the U-Net semantic segmentation cod
 
 The raw data is available at the following link:
 
-🔗 [Baidu Netdisk Download](https://pan.baidu.com/s/1kdMM-1kGtTySoZxQV1z1zA?pwd=khy1)
+ [Baidu Netdisk Download](https://pan.baidu.com/s/1kdMM-1kGtTySoZxQV1z1zA?pwd=khy1)
 
 
 ---
