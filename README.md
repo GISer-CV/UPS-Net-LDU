@@ -1,7 +1,7 @@
 
 # UPS-Net-LDU
 
-This repository contains the implementation of **UPS-Net-LDU**, designed for semantic segmentation of *Ulva prolifera* (green tide) in remote sensing images.
+This repository contains the implementation of **UPS-Net-LDU**, designed for semantic segmentation of *Ulva prolifera* in remote sensing images.
 
 This project is built upon and improved from the U-Net semantic segmentation code originally developed by [Bubbliiiing](https://github.com/bubbliiiing). We sincerely appreciate the author's outstanding open-source contribution. 🙏
 
